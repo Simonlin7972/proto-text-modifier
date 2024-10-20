@@ -24,6 +24,7 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
   const [fontFamily, setFontFamily] = useState<FontFamily>('Inter');
   const [charCount, setCharCount] = useState(0);
   const [textBlocks, setTextBlocks] = useState<string[]>([]);
+  const [copiedStates, setCopiedStates] = useState<boolean[]>([]);
 
   useEffect(() => {
     setText(initialText);
@@ -90,7 +91,25 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
       blocks.push(text.slice(i, i + 300));
     }
     setTextBlocks(blocks);
+    setCopiedStates(new Array(blocks.length).fill(false));
   }, [text]);
+
+  const handleCopy = useCallback((index: number) => {
+    navigator.clipboard.writeText(textBlocks[index]).then(() => {
+      setCopiedStates(prev => {
+        const newStates = [...prev];
+        newStates[index] = true;
+        return newStates;
+      });
+      setTimeout(() => {
+        setCopiedStates(prev => {
+          const newStates = [...prev];
+          newStates[index] = false;
+          return newStates;
+        });
+      }, 2000);
+    });
+  }, [textBlocks]);
 
   return (
     <div className="flex align-items-center justify-center">
@@ -226,12 +245,23 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
           <div className="mb-4"></div>
         </div>
       </div>
+
+      
       {textBlocks.length > 0 && (
         <div className="ml-8 w-full">
-          <div className="space-y-4">
+          <div className="space-y-6 ">
             {textBlocks.map((block, index) => (
-              <div key={index} className="p-6 bg-gray-50 shadow-lg rounded-lg">
-                <p>{block}</p>
+              <div 
+                key={index} 
+                className="relative p-6 bg-gray-50 shadow-lg rounded-xl group"
+              >
+                <p className="text-sm text-gray-700">{block}</p>
+                <button
+                  onClick={() => handleCopy(index)}
+                  className="absolute bottom-3 right-3 hidden group-hover:block bg-black hover:bg-gray-800 text-white text-sm font-semibold py-1 px-2 rounded-md transition-colors duration-200"
+                >
+                  {copiedStates[index] ? 'Copied!' : 'Copy'}
+                </button>
               </div>
             ))}
           </div>
