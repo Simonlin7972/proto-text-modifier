@@ -192,10 +192,10 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
         message="The changes have been reset" 
         isVisible={showToast} 
         onHide={() => setShowToast(false)} 
-        className="top-10"  // 添加這行
+        className="top-10"
       />
-      <div className="flex align-items-center justify-center">
-        <div className={`${className} w-1/2 bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 ease-in-out ${showBlocks ? 'mr-8' : ''}`}>
+      <div className="flex flex-col lg:flex-row align-items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className={`${className} w-full lg:w-1/2 bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 ease-in-out ${showBlocks ? 'lg:mr-8' : ''}`}>
           <div className="pt-8 pr-8 pl-8 relative">
             <textarea
               ref={textareaRef}
@@ -340,12 +340,12 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
                 />
               </div>
             </div>
-            <div className="flex space-x-4 pb-4 pt-4">
-              <div className="relative group">
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pb-4 pt-4">
+              <div className="relative group w-full sm:w-auto">
                 <button
                   onClick={handleReset}
                   disabled={!isChanged}
-                  className={`flex-shrink-0 px-8 py-5 bg-gray-200 text-gray-800 text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline flex items-center justify-center ${
+                  className={`w-full sm:w-auto flex-shrink-0 px-8 py-5 bg-gray-200 text-gray-800 text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline flex items-center justify-center ${
                     isChanged ? 'hover:bg-gray-300' : 'opacity-40 cursor-not-allowed'
                   }`}
                   aria-label="Reset"
@@ -362,7 +362,7 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
               <button
                 onClick={handleSplitText}
                 disabled={text.trim().length === 0}
-                className={`flex-1 py-4 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline ${
+                className={`w-full sm:w-auto flex-1 py-4 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline ${
                   text.trim().length === 0
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-black hover:bg-gray-800'
@@ -372,7 +372,7 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
               </button>
               <button
                 onClick={generateQuote}
-                className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline"
+                className="w-full sm:w-auto flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline"
               >
                 Add Quote
               </button>
@@ -380,8 +380,8 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
           </div>
         </div>
 
-{/* 右邊block區 */}
-        <div className={`w-1/2 transition-all duration-300 ease-in-out ${showBlocks ? 'block' : 'hidden'}`}>
+        {/* 右邊block區 */}
+        <div className={`w-full lg:w-1/2 mt-8 lg:mt-0 transition-all duration-300 ease-in-out ${showBlocks ? 'block' : 'hidden'}`}>
           {textBlocks.length > 0 && (
             <div className="space-y-6">
               {textBlocks.map((block, index) => (

@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div className="App bg-gray-200 min-h-screen flex items-center justify-center">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto py-8">
         <EditableCard
           initialText={title}
           onTextChange={handleTitleChange}
