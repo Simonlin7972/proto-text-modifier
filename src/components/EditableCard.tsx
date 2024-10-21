@@ -4,6 +4,7 @@ import '@fontsource/roboto-mono';
 import '@fontsource/montserrat';
 import quotes from '../quotes.json';
 import { RotateCcw } from 'lucide-react';  // 導入 RotateCcw 圖標
+import Toast from './Toast';
 // import './styles/globals.css';
 
 
@@ -29,6 +30,9 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
   const [showBlocks, setShowBlocks] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const editRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isChanged, setIsChanged] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     setText(initialText);
@@ -42,6 +46,7 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setText(newText);
+    setIsChanged(true);
     if (onTextChange) {
       onTextChange(newText);
     }
@@ -49,22 +54,27 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
 
   const handleFontSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFontSize(Number(e.target.value));
+    setIsChanged(true);
   }, []);
 
   const handleFontWeightChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFontWeight(Number(e.target.value));
+    setIsChanged(true);
   }, []);
 
   const handleLetterSpacingChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setLetterSpacing(Number(e.target.value));
+    setIsChanged(true);
   }, []);
 
   const handleLineHeightChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setLineHeight(Number(e.target.value));
+    setIsChanged(true);
   }, []);
 
   const handleFontFamilyChange = useCallback((font: FontFamily) => {
     setFontFamily(font);
+    setIsChanged(true);
   }, []);
 
   const handleReset = useCallback(() => {
@@ -74,9 +84,11 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
     setLetterSpacing(0);
     setLineHeight(1.5);
     setFontFamily('Inter');
-    setTextBlocks([]); // 清除文本塊
-    setCopiedStates([]); // 清除複製狀態
-    setShowBlocks(false); // 隱藏右側區塊
+    setTextBlocks([]);
+    setCopiedStates([]);
+    setShowBlocks(false);
+    setIsChanged(false);
+    setShowToast(true);
     if (onReset) {
       onReset();
     }
@@ -142,197 +154,275 @@ const EditableCard: React.FC<EditableCardProps> = ({ initialText = '', onTextCha
     };
   }, [handleClickOutside]);
 
-  return (
-    <div className="flex align-items-center justify-center">
-      <div className={`${className} w-1/2 bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 ease-in-out ${showBlocks ? 'mr-8' : ''}`}>
-        <div className="pt-8 pr-8 pl-8 relative">
-          <textarea
-            value={text}
-            onChange={handleTextChange}
-            className="w-full h-48 p-4 border border-gray-300 hover:border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 overflow-auto resize-vertical"
-            style={{ 
-              fontSize: `${fontSize}px`, 
-              fontWeight: fontWeight,
-              letterSpacing: `${letterSpacing}px`,
-              lineHeight: lineHeight,
-              fontFamily: fontFamily,
-              minHeight: '12rem', // 設置最小高度
-              maxHeight: '32rem', // 設置最大高度
-            }}
-            placeholder="Please enter your text here.."
-          />
-          <div className="absolute bottom-4 right-12 text-sm text-gray-500">
-            Character count: {charCount}
-          </div>
-        </div>
-        <div className="px-8 py-4 space-y-4">
-          <div className="space-y-2 pb-4">
-            <div className="flex space-x-4">
-              {['Inter', 'Roboto Mono', 'Montserrat'].map((font) => (
-                <button
-                  key={font}
-                  onClick={() => handleFontFamilyChange(font as FontFamily)}
-                  className={`flex-1 py-3 px-3 text-sm font-semibold rounded-xl ${
-                    fontFamily === font
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                  style={{ fontFamily: font }}
-                >
-                  {font}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-700">Font Size</span>
-                <span className="text-sm text-gray-600">{fontSize}px</span>
-              </div>
-              <input
-                type="range"
-                min="12"
-                max="48"
-                value={fontSize}
-                onChange={handleFontSizeChange}
-                className="w-full h-4 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #60a5fa ${((fontSize - 12) / (48 - 12)) * 100}%, #e5e7eb ${((fontSize - 12) / (48 - 12)) * 100}%)`
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-700">Font Weight</span>
-                <span className="text-sm text-gray-600">{fontWeight}</span>
-              </div>
-              <input
-                type="range"
-                min="100"
-                max="900"
-                step="100"
-                value={fontWeight}
-                onChange={handleFontWeightChange}
-                className="w-full h-4 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #60a5fa ${((fontWeight - 100) / (900 - 100)) * 100}%, #e5e7eb ${((fontWeight - 100) / (900 - 100)) * 100}%)`
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-700">Letter Spacing</span>
-                <span className="text-sm text-gray-600">{letterSpacing}px</span>
-              </div>
-              <input
-                type="range"
-                min="-2"
-                max="50"
-                step="0.5"
-                value={letterSpacing}
-                onChange={handleLetterSpacingChange}
-                className="w-full h-4 bg-gray-200 rounded-xl appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #60a5fa ${((letterSpacing + 2.5) / (50 + 2)) * 100}%, #e5e7eb ${((letterSpacing + 2.5) / (50 + 2)) * 100}%)`
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-700">Line Height</span>
-                <span className="text-sm text-gray-600">{lineHeight.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.1"
-                value={lineHeight}
-                onChange={handleLineHeightChange}
-                className="w-full h-4 bg-gray-200 rounded-xl appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #60a5fa ${((lineHeight - 1) / (3 - 1)) * 100}%, #e5e7eb ${((lineHeight - 1) / (3 - 1)) * 100}%)`
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex space-x-4 pb-4 pt-4">
-            <div className="relative group">
-              <button
-                onClick={handleReset}
-                className="flex-shrink-0 px-8 py-4 bg-gray-200 hover:bg-gray-300 text-gray-800 text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline flex items-center justify-center"
-                aria-label="Reset"
-              >
-                <RotateCcw size={24} />
-              </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-black text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                Reset
-              </div>
-            </div>
-            <button
-              onClick={handleSplitText}
-              disabled={text.trim().length === 0}
-              className={`flex-1 py-4 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline ${
-                text.trim().length === 0
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-black hover:bg-gray-800'
-              }`}
-            >
-              Split Text
-            </button>
-            <button
-              onClick={generateQuote}
-              className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline"
-            >
-              Add Quote
-            </button>
-          </div>
-        </div>
-      </div>
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<number>>, min: number, max: number) => {
+    const value = e.target.value;
+    if (value === '') {
+      setter(min); // 當輸入為空時，設置為最小值
+    } else {
+      const numValue = Number(value);
+      if (!isNaN(numValue)) {
+        setter(Math.max(min, Math.min(max, numValue))); // 確保值在範圍內
+      }
+    }
+  }, []);
 
-{/* 右邊block區 */}
-      <div className={`w-1/2 transition-all duration-300 ease-in-out ${showBlocks ? 'block' : 'hidden'}`}>
-        {textBlocks.length > 0 && (
-          <div className="space-y-6">
-            {textBlocks.map((block, index) => (
-              <div 
-                key={index} 
-                className="relative p-6 bg-gray-50 shadow-lg rounded-xl group"
-              >
-                {editingIndex === index ? (
-                  <textarea
-                    ref={editRef}
-                    value={block}
-                    onChange={(e) => handleEditChange(e, index)}
-                    className="w-full h-32 p-2 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
+  // 修改所有輸入框的 className
+  const inputClassName = "w-16 p-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center appearance-none";
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'r' || event.key === 'R') {
+        // 檢查 textarea 是否被聚焦
+        if (document.activeElement !== textareaRef.current) {
+          handleReset();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleReset]);
+
+  return (
+    <>
+      <Toast 
+        message="The changes have been reset" 
+        isVisible={showToast} 
+        onHide={() => setShowToast(false)} 
+        className="top-10"  // 添加這行
+      />
+      <div className="flex align-items-center justify-center">
+        <div className={`${className} w-1/2 bg-white shadow-xl rounded-2xl overflow-hidden transition-all duration-300 ease-in-out ${showBlocks ? 'mr-8' : ''}`}>
+          <div className="pt-8 pr-8 pl-8 relative">
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={handleTextChange}
+              className="w-full h-48 p-4 border border-gray-300 hover:border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 overflow-auto resize-vertical"
+              style={{ 
+                fontSize: `${fontSize}px`, 
+                fontWeight: fontWeight,
+                letterSpacing: `${letterSpacing}px`,
+                lineHeight: lineHeight,
+                fontFamily: fontFamily,
+                minHeight: '12rem',
+                maxHeight: '32rem',
+              }}
+              placeholder="Please enter your text here.."
+            />
+            <div className="absolute bottom-4 right-12 text-sm text-gray-500">
+              Character count: {charCount}
+            </div>
+          </div>
+          <div className="px-8 py-4 space-y-4">
+            <div className="space-y-2 pb-4">
+              <div className="flex space-x-4">
+                {['Inter', 'Roboto Mono', 'Montserrat'].map((font) => (
+                  <button
+                    key={font}
+                    onClick={() => handleFontFamilyChange(font as FontFamily)}
+                    className={`flex-1 py-3 px-3 text-sm font-semibold rounded-xl ${
+                      fontFamily === font
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                    style={{ fontFamily: font }}
+                  >
+                    {font}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-700">Font Size</span>
+                  <input
+                    type="number"
+                    value={fontSize}
+                    onChange={(e) => handleInputChange(e, setFontSize, 12, 48)}
+                    className={inputClassName}
+                    min="12"
+                    max="48"
                   />
-                ) : (
-                  <p className="text-sm text-gray-700">{block}</p>
-                )}
-                {editingIndex !== index && (
-                  <div className="absolute bottom-3 right-3 hidden group-hover:flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(index)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-1 px-2 rounded-md transition-colors duration-200"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleCopy(index)}
-                      className="bg-black hover:bg-gray-800 text-white text-sm font-semibold py-1 px-2 rounded-md transition-colors duration-200"
-                    >
-                      {copiedStates[index] ? 'Copied!' : 'Copy'}
-                    </button>
+                </div>
+                <input
+                  type="range"
+                  min="12"
+                  max="48"
+                  value={fontSize}
+                  onChange={handleFontSizeChange}
+                  className="w-full h-4 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #60a5fa ${((fontSize - 12) / (48 - 12)) * 100}%, #e5e7eb ${((fontSize - 12) / (48 - 12)) * 100}%)`
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-700">Font Weight</span>
+                  <input
+                    type="number"
+                    value={fontWeight}
+                    onChange={(e) => handleInputChange(e, setFontWeight, 100, 900)}
+                    className={inputClassName}
+                    min="100"
+                    max="900"
+                    step="100"
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="100"
+                  max="900"
+                  step="100"
+                  value={fontWeight}
+                  onChange={handleFontWeightChange}
+                  className="w-full h-4 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #60a5fa ${((fontWeight - 100) / (900 - 100)) * 100}%, #e5e7eb ${((fontWeight - 100) / (900 - 100)) * 100}%)`
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-700">Letter Spacing</span>
+                  <input
+                    type="number"
+                    value={letterSpacing}
+                    onChange={(e) => handleInputChange(e, setLetterSpacing, -2, 50)}
+                    className={inputClassName}
+                    min="-2"
+                    max="50"
+                    step="0.5"
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="-2"
+                  max="50"
+                  step="0.5"
+                  value={letterSpacing}
+                  onChange={handleLetterSpacingChange}
+                  className="w-full h-4 bg-gray-200 rounded-xl appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #60a5fa ${((letterSpacing + 2.5) / (50 + 2)) * 100}%, #e5e7eb ${((letterSpacing + 2.5) / (50 + 2)) * 100}%)`
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-700">Line Height</span>
+                  <input
+                    type="number"
+                    value={lineHeight}
+                    onChange={(e) => handleInputChange(e, setLineHeight, 1, 3)}
+                    className={inputClassName}
+                    min="1"
+                    max="3"
+                    step="0.1"
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={lineHeight}
+                  onChange={handleLineHeightChange}
+                  className="w-full h-4 bg-gray-200 rounded-xl appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #60a5fa ${((lineHeight - 1) / (3 - 1)) * 100}%, #e5e7eb ${((lineHeight - 1) / (3 - 1)) * 100}%)`
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex space-x-4 pb-4 pt-4">
+              <div className="relative group">
+                <button
+                  onClick={handleReset}
+                  disabled={!isChanged}
+                  className={`flex-shrink-0 px-8 py-5 bg-gray-200 text-gray-800 text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline flex items-center justify-center ${
+                    isChanged ? 'hover:bg-gray-300' : 'opacity-40 cursor-not-allowed'
+                  }`}
+                  aria-label="Reset"
+                >
+                  <RotateCcw size={24} />
+                </button>
+                {isChanged && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-black text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none flex items-center">
+                    Reset
+                    <span className="ml-2 px-1 py-0.5 bg-gray-700 rounded text-[10px]">R</span>
                   </div>
                 )}
               </div>
-            ))}
+              <button
+                onClick={handleSplitText}
+                disabled={text.trim().length === 0}
+                className={`flex-1 py-4 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline ${
+                  text.trim().length === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-black hover:bg-gray-800'
+                }`}
+              >
+                Split Text
+              </button>
+              <button
+                onClick={generateQuote}
+                className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold rounded-xl focus:outline-none focus:shadow-outline"
+              >
+                Add Quote
+              </button>
+            </div>
           </div>
-        )}
+        </div>
+
+{/* 右邊block區 */}
+        <div className={`w-1/2 transition-all duration-300 ease-in-out ${showBlocks ? 'block' : 'hidden'}`}>
+          {textBlocks.length > 0 && (
+            <div className="space-y-6">
+              {textBlocks.map((block, index) => (
+                <div 
+                  key={index} 
+                  className="relative p-6 bg-gray-50 shadow-lg rounded-xl group"
+                >
+                  {editingIndex === index ? (
+                    <textarea
+                      ref={editRef}
+                      value={block}
+                      onChange={(e) => handleEditChange(e, index)}
+                      className="w-full h-32 p-2 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-700">{block}</p>
+                  )}
+                  {editingIndex !== index && (
+                    <div className="absolute bottom-3 right-3 hidden group-hover:flex space-x-2">
+                      <button
+                        onClick={() => handleEdit(index)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-1 px-2 rounded-md transition-colors duration-200"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleCopy(index)}
+                        className="bg-black hover:bg-gray-800 text-white text-sm font-semibold py-1 px-2 rounded-md transition-colors duration-200"
+                      >
+                        {copiedStates[index] ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
